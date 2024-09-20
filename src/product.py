@@ -99,8 +99,7 @@ class products():
                         conn.close()
                         ex.show_warning_message("Import", f"Imported {len(df)} Rows")
                     except Exception as e:
-                        ex.show_error_message("Import Error", "Error in importing the file.")
-                        print(e)
+                        ex.show_error_message("Import Error", "Duplicate data detected.")
                 else:
                     # User clicked Cancel, do nothing
                     ex.show_error_message("Import", "Import Cancelled")

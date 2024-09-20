@@ -1,13 +1,13 @@
-from PyQt5.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QSpacerItem, QSizePolicy, QFormLayout, QLineEdit, QPushButton, QTextEdit, QLabel, QTabWidget, QDateEdit, QComboBox
+from PyQt5.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QTableWidget, QFormLayout, QLineEdit, QPushButton, QTextEdit, QLabel, QTabWidget, QDateEdit, QComboBox, QHeaderView
 from PyQt5.QtCore import QDate, Qt
-from PyQt5.QtGui import QKeySequence
+from PyQt5.QtGui import QKeySequence, QFont
 from src.dbSetup import databaseSetup
 from src.product import products
 from src.sales import salesData
 from src.report import reportGeneration
 
 stylesheet = """
-QLabel, QLineEdit, QPushButton, QDateEdit {
+QLineEdit, QPushButton, QDateEdit {
     font-size: 9pt;
 }
 """
@@ -17,6 +17,7 @@ class InventoryApp(QMainWindow):
         super().__init__()
         self.setStyleSheet(stylesheet)
         self.product_int = products()
+        self.sales_int = salesData()
         self.setWindowTitle('Inventory Management System')
         self.setGeometry(100, 100, 800, 600)
         self.showMaximized()
@@ -56,6 +57,7 @@ class InventoryApp(QMainWindow):
         self.price = QLineEdit()
         self.price.setPlaceholderText("Enter Product price")
         self.date_edit = QDateEdit(self)
+        self.date_edit.setMaximumDate(QDate.currentDate())
         self.Quantity = QLineEdit()
         self.Quantity.setPlaceholderText("Quantity in ml")
         self.category = QLineEdit()
@@ -155,27 +157,51 @@ class InventoryApp(QMainWindow):
 
         self.sale_product_id = QLineEdit()
         self.sale_product_id.setPlaceholderText("Scan Barcode for ID")
-        self.sale_product_name = QLineEdit()
-        self.sale_product_name.setPlaceholderText("Enter Product Name")
-        self.sale_price = QLineEdit()
-        self.sale_price.setPlaceholderText("Enter Product price")
         self.sale_date_edit = QDateEdit(self)
-        self.sale_Quantity = QLineEdit()
-        self.sale_Quantity.setPlaceholderText("Quantity in ml")
-        self.sale_category = QLineEdit()
-        self.sale_category.setPlaceholderText("Whisky/Beer/Rum/Vodka")
+        self.sale_date_edit.setMaximumDate(QDate.currentDate())
+        self.sale_Discount = QLineEdit()
+        self.sale_Discount.setPlaceholderText("Discount %")
 
         layout.addRow(QLabel("Product ID:"), self.sale_product_id)
-        layout.addRow(QLabel("Product Name:"), self.sale_product_name)
-        layout.addRow(QLabel("Product Price:"), self.sale_price)
         layout.addRow(QLabel("Sale Date (YYYY-MM-DD):"), self.sale_date_edit)
-        layout.addRow(QLabel("Quantity:"), self.sale_Quantity)
-        layout.addRow(QLabel("Category:"), self.sale_category)
+        layout.addRow(QLabel("Discount:"), self.sale_Discount)
+
+        self.sale_date_edit.setCalendarPopup(True)  # Enable the calendar popup
+        self.sale_date_edit.setDate(QDate.currentDate())  # Set to the system's current date
+        self.sale_date_edit.setFixedWidth(150)
+
 
         self.record_sale_button = QPushButton("Record Sale")
-        self.record_sale_button.clicked.connect(salesData.record_sale)
+        self.record_sale_button.clicked.connect(lambda: self.sales_int.record_sale(self.sale_product_id, 
+                                                                                   self.sale_Discount, 
+                                                                                   self.sale_date_edit,
+                                                                                   self.product_info_table, 
+                                                                                   self.total_price_label))
 
         layout.addWidget(self.record_sale_button)
+        self.shortcut = QKeySequence("Return")
+        self.record_sale_button.setShortcut(self.shortcut)
+
+        # Table to display product info
+        self.product_info_table = QTableWidget(0, 7)
+        self.product_info_table.setHorizontalHeaderLabels(["Date", "Product ID", "Product Name", "Stock Date", "Price", "Discounted Price", "  "])
+        # Adjust the column width to fit the table's width
+        header = self.product_info_table.horizontalHeader()
+
+        # Stretch the columns to match the window layout
+        header.setSectionResizeMode(QHeaderView.Stretch)
+        layout.addWidget(self.product_info_table)
+
+        # Label to display the total price
+        self.total_price_label = QLabel("Total Price: ₹0.00")
+        my_font = QFont("Arial", 20)
+        self.total_price_label.setFont(my_font)
+        layout.addWidget(self.total_price_label)
+
+        # Done button to finalize the sale
+        self.done_button = QPushButton("Done")
+        # self.done_button.clicked.connect(salesData.finalize_sale)
+        layout.addWidget(self.done_button)
         self.sales_tab.setLayout(layout)
 
     def setup_report_tab(self):

@@ -1,27 +1,137 @@
 import sqlite3
+from PyQt5.QtWidgets import QTableWidgetItem, QDialog, QVBoxLayout, QLabel, QPushButton
 from src.exceptions import exceptions as ex
 
 class salesData:
-    def __init__(self) -> None:
-        pass
-    def record_sale(self):
+    def __init__(self):
+        self.total_price = 0.0
+        self.current_sale_id = None
+
+    def query_product(self, product_id):
+        conn = sqlite3.connect('inventory_sales.db')
+        cursor = conn.cursor()
+
+        # Query the product details from the database
+        # product_id = int(product_id)
         try:
-            product_id = int(self.sale_product_id.text())
-            quantity = int(self.sale_quantity.text())
-            sale_date = self.sale_date.text()
-            if quantity < 0:
-                ex.show_warning_message("Input Error", "Quantity cannot be negative")
-            conn = sqlite3.connect('inventory_sales.db')
-            cursor = conn.cursor()
-            cursor.execute("INSERT INTO Sales (product_id, quantity, sale_date) VALUES (?, ?, ?)",
-                            (product_id, quantity, sale_date))
-            cursor.execute("UPDATE Products SET quantity = quantity - ? WHERE product_id = ?",
-                            (quantity, product_id))
-            conn.commit()
+            cursor.execute("SELECT product_id, product_name, price, date FROM Products WHERE product_id = ?", (int(product_id),))
+            product = cursor.fetchone()
+
             conn.close()
-        except ValueError as ve:
-            ex.show_warning_message("Input Error", str(ve))
-        except sqlite3.IntegrityError:
-            ex.show_warning_message("Data Error", "Product ID not found")
+
+            if product:
+                return product
+            else:
+                return None
         except Exception as e:
-            ex.show_error_message("Database Error", str(e))
+            return None
+
+    def record_sale(self, sale_product_id, sale_Discount, sale_date_edit, product_info_table, total_price_label):
+        try:
+            product_id = sale_product_id.text()
+            discount_percent = float(sale_Discount.text()) if sale_Discount.text() else 0
+            sale_date = sale_date_edit.date().toString("yyyy-MM-dd")
+
+            # Query product information
+            product = self.query_product(product_id)
+            if product:
+                product_id, product_name, price, stock_date = product
+                discounted_price = price * (1 - discount_percent / 100)
+                
+
+                # Add the product info to the table
+                row_position = product_info_table.rowCount()
+                product_info_table.insertRow(row_position)
+                product_info_table.setItem(row_position, 0, QTableWidgetItem(sale_date))
+                product_info_table.setItem(row_position, 1, QTableWidgetItem(product_id))
+                product_info_table.setItem(row_position, 2, QTableWidgetItem(product_name))
+                product_info_table.setItem(row_position, 3, QTableWidgetItem(stock_date))
+                product_info_table.setItem(row_position, 4, QTableWidgetItem(f"₹{price:.2f}"))
+                product_info_table.setItem(row_position, 5, QTableWidgetItem(f"₹{discounted_price:.2f}"))
+
+
+
+                delete_button = QPushButton("✖")  # Cross mark
+                delete_button.clicked.connect(lambda :self.delete_item(product_info_table, 
+                                                                    total_price_label))
+                product_info_table.setCellWidget(row_position, 6, delete_button)
+
+                # Update the total price
+                self.total_price += discounted_price
+                total_price_label.setText(f"Total Price: ₹{self.total_price:.2f}")
+
+            else:
+                ex.show_error_message("Error", "Product Not found")
+        except Exception as e:
+            ex.show_error_message("Error", "Invalid action.")
+        finally:
+            sale_product_id.clear()
+            sale_product_id.setFocus()
+
+    def finalize_sale(self):
+        conn = sqlite3.connect('inventory_sales.db')
+        cursor = conn.cursor()
+
+        # Insert the sale into the Sales table and get the sale_id
+        cursor.execute("INSERT INTO Sales (sale_date, total_price) VALUES (?, ?)", 
+                       (self.sale_date_edit.date().toString("yyyy-MM-dd"), self.total_price))
+        self.current_sale_id = cursor.lastrowid  # Get the last inserted sale_id
+
+        # Save each row in the table to the SaleItems database
+        for row in range(self.product_info_table.rowCount()):
+            product_id = self.product_info_table.item(row, 0).text()
+            product_name = self.product_info_table.item(row, 1).text()
+            quantity = int(self.product_info_table.item(row, 2).text())
+            discount_percent = float(self.sale_Discount.text()) if self.sale_Discount.text() else 0
+            sale_price = float(self.product_info_table.item(row, 4).text().replace("$", ""))
+
+            cursor.execute("""
+                INSERT INTO SaleItems (sale_id, product_id, product_name, quantity, discount_percent, sale_price)
+                VALUES (?, ?, ?, ?, ?, ?)
+            """, (self.current_sale_id, product_id, product_name, quantity, discount_percent, sale_price))
+
+        conn.commit()
+        conn.close()
+
+        # Clear the total price and product info after saving
+        self.total_price = 0.0
+        self.total_price_label.setText("Total Price: $0.00")
+        self.product_info_table.setRowCount(0)  # Clear the table
+
+        print("Sale finalized and saved.")
+
+    def delete_item(self, product_info_table, total_price_label):
+        # row_count = product_info_table.rowCount()
+        # print(f"row_posi:{row_position} --- row_count: {row_count}")
+        # if row_position >= row_count:
+        #     return
+        
+        # discounted_price_item = product_info_table.item(row_position, 5)  # Column for Discounted Price
+        # try:
+        #     if discounted_price_item is not None:
+        #         discounted_price = float(discounted_price_item.text().replace("₹", ""))
+        #         # Update the total price before removing the row
+        #         self.total_price -= discounted_price
+                
+        #         # Remove the row from the table
+        #         product_info_table.removeRow(row_position)
+            
+        #         # Update the total price label
+        #         total_price_label.setText(f"Total Price: ₹{self.total_price:.2f}")
+        #     else:
+        #         ex.show_error_message("Error", "Item not found.")
+        # except Exception as e:
+        #     ex.show_error_message("Error", "Some error has occured.")
+        selected_rows = product_info_table.selectionModel().selectedRows()
+        print("here")
+        for row in selected_rows:
+            # Update the total price based on the row's price column (e.g., column 5)
+            discounted_price_item = product_info_table.item(row.row(), 5)
+            discounted_price = float(discounted_price_item.text().replace("₹", ""))
+            self.total_price -= discounted_price
+            
+            # Remove the row
+            product_info_table.removeRow(row.row())
+            
+        # Update total price label
+        total_price_label.setText(f"Total Price: ₹{self.total_price:.2f}")
