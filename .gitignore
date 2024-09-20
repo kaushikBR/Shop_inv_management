@@ -127,3 +127,11 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# Test Dataset
+shop_data_messed.csv
+shop_data_messed.xlsx
+shop_data.csv
+shop_data.xlsx
+test.csv
+test.xlsx
