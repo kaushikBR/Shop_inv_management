@@ -52,8 +52,7 @@ class salesData:
 
 
                 delete_button = QPushButton("✖")  # Cross mark
-                delete_button.clicked.connect(lambda :self.delete_item(product_info_table, 
-                                                                    total_price_label))
+                delete_button.clicked.connect(lambda :self.delete_item(delete_button, product_info_table, total_price_label))
                 product_info_table.setCellWidget(row_position, 6, delete_button)
 
                 # Update the total price
@@ -67,6 +66,7 @@ class salesData:
         finally:
             sale_product_id.clear()
             sale_product_id.setFocus()
+            sale_Discount.clear()
 
     def finalize_sale(self):
         conn = sqlite3.connect('inventory_sales.db')
@@ -100,38 +100,25 @@ class salesData:
 
         print("Sale finalized and saved.")
 
-    def delete_item(self, product_info_table, total_price_label):
-        # row_count = product_info_table.rowCount()
-        # print(f"row_posi:{row_position} --- row_count: {row_count}")
-        # if row_position >= row_count:
-        #     return
+    def delete_item(self, delete_button, product_info_table, total_price_label):
+        row_position = product_info_table.indexAt(delete_button.pos()).row()  # Get row dynamically based on button position
         
-        # discounted_price_item = product_info_table.item(row_position, 5)  # Column for Discounted Price
-        # try:
-        #     if discounted_price_item is not None:
-        #         discounted_price = float(discounted_price_item.text().replace("₹", ""))
-        #         # Update the total price before removing the row
-        #         self.total_price -= discounted_price
+        if row_position == -1:
+            return  # If the row is invalid, do nothing
+        
+        discounted_price_item = product_info_table.item(row_position, 5)  # Column for Discounted Price
+        try:
+            if discounted_price_item is not None:
+                discounted_price = float(discounted_price_item.text().replace("₹", ""))
+                # Update the total price before removing the row
+                self.total_price -= discounted_price
                 
-        #         # Remove the row from the table
-        #         product_info_table.removeRow(row_position)
+                # Remove the row from the table
+                product_info_table.removeRow(row_position)
             
-        #         # Update the total price label
-        #         total_price_label.setText(f"Total Price: ₹{self.total_price:.2f}")
-        #     else:
-        #         ex.show_error_message("Error", "Item not found.")
-        # except Exception as e:
-        #     ex.show_error_message("Error", "Some error has occured.")
-        selected_rows = product_info_table.selectionModel().selectedRows()
-        print("here")
-        for row in selected_rows:
-            # Update the total price based on the row's price column (e.g., column 5)
-            discounted_price_item = product_info_table.item(row.row(), 5)
-            discounted_price = float(discounted_price_item.text().replace("₹", ""))
-            self.total_price -= discounted_price
-            
-            # Remove the row
-            product_info_table.removeRow(row.row())
-            
-        # Update total price label
-        total_price_label.setText(f"Total Price: ₹{self.total_price:.2f}")
+                # Update the total price label
+                total_price_label.setText(f"Total Price: ₹{self.total_price:.2f}")
+            else:
+                ex.show_error_message("Error", "Item not found.")
+        except Exception as e:
+            ex.show_error_message("Error", "Some error has occurred.")
