@@ -193,7 +193,7 @@ class InventoryApp(QMainWindow):
         layout.addWidget(self.product_info_table)
 
         # Label to display the total price
-        self.total_price_label = QLabel("Total Price: ₹0.00")
+        self.total_price_label = QLabel("Total: ₹0.00")
         my_font = QFont("Arial", 20)
         self.total_price_label.setFont(my_font)
         layout.addWidget(self.total_price_label)
