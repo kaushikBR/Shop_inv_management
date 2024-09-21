@@ -28,8 +28,7 @@ class databaseSetup():
             CREATE TABLE IF NOT EXISTS Sales (
                 sale_id INTEGER PRIMARY KEY AUTOINCREMENT,
                 sale_date DATE,
-                total_price REAL,
-                UNIQUE(sale_date)
+                total_price REAL
             )
             """)
 

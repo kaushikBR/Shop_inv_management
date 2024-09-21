@@ -1,10 +1,13 @@
-from PyQt5.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QTableWidget, QFormLayout, QLineEdit, QPushButton, QTextEdit, QLabel, QTabWidget, QDateEdit, QComboBox, QHeaderView
+from PyQt5.QtWidgets import (QMainWindow, QDialog ,QWidget, QVBoxLayout, QHBoxLayout, 
+                             QTableWidget, QFormLayout, QLineEdit, QPushButton, QTextEdit, 
+                             QLabel, QTabWidget, QDateEdit, QComboBox, QHeaderView)
 from PyQt5.QtCore import QDate, Qt
 from PyQt5.QtGui import QKeySequence, QFont
 from src.dbSetup import databaseSetup
 from src.product import products
-from src.sales import salesData
+from src.sales import salesData, FinalizeSaleDialog
 from src.report import reportGeneration
+from src.exceptions import exceptions as ex
 
 stylesheet = """
 QLineEdit, QPushButton, QDateEdit {
@@ -184,7 +187,7 @@ class InventoryApp(QMainWindow):
 
         # Table to display product info
         self.product_info_table = QTableWidget(0, 7)
-        self.product_info_table.setHorizontalHeaderLabels(["Date", "Product ID", "Product Name", "Stock Date", "Price", "Discounted Price", "  "])
+        self.product_info_table.setHorizontalHeaderLabels(["Date", "Product ID", "Product Name", "Stock Date", "MRP", "Discounted MRP", "  "])
         # Adjust the column width to fit the table's width
         header = self.product_info_table.horizontalHeader()
 
@@ -200,20 +203,39 @@ class InventoryApp(QMainWindow):
 
         # Done button to finalize the sale
         self.done_button = QPushButton("Done")
-        # self.done_button.clicked.connect(salesData.finalize_sale)
+        self.done_button.clicked.connect(self.open_finalize_sale_dialog)
         layout.addWidget(self.done_button)
         self.sales_tab.setLayout(layout)
 
+    def open_finalize_sale_dialog(self):
+        # Collect current sale items from the product_info_table
+        sale_items = []
+        for row in range(self.product_info_table.rowCount()):
+            item = {
+                'id': self.product_info_table.item(row, 1).text(),
+                'name': self.product_info_table.item(row, 2).text(),
+                'MRP': float(self.product_info_table.item(row, 4).text().replace("₹", "")),
+                'Discounted MRP': float(self.product_info_table.item(row, 5).text().replace("₹", ""))
+            }
+            sale_items.append(item)
+
+        total_price = self.sales_int.total_price
+        date = self.sales_int.date
+
+        # Open the finalize sale dialog
+        dialog = FinalizeSaleDialog(self, sale_items, total_price, date, self.total_price_label)
+        if dialog.exec_() == QDialog.Accepted:
+            ex.show_warning_message("Done", "Sale Recorded")
+
+    def clear_sales_table(self):
+        # Clear the product info table after finalizing
+        self.product_info_table.setRowCount(0)
+        self.total_price_label.setText("Total Price: ₹0.00")
+        self.sales_int.total_price = 0.0
+
     def setup_report_tab(self):
-        self.report_text = QTextEdit()
-        self.report_text.setReadOnly(True)
-
-        self.report_button = QPushButton("Generate Sales Report")
-        self.report_button.clicked.connect(reportGeneration.generate_report)
-
-        layout = QVBoxLayout()
-        layout.addWidget(self.report_button)
-        layout.addWidget(self.report_text)
-        self.report_tab.setLayout(layout)
-
-    
+        # Replacing this method with the full integration of reportGeneration UI
+        self.report_widget = reportGeneration()  # Instantiate the report generation class
+        report_layout = QVBoxLayout()  # Create a layout for the Reports tab
+        report_layout.addWidget(self.report_widget)  # Add the report widget to the layout
+        self.report_tab.setLayout(report_layout)  # Set the layout on the Reports tab
