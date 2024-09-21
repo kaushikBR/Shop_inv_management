@@ -142,11 +142,16 @@ class salesData:
 
     def record_sale(self, sale_product_id, sale_Discount, sale_date_edit, product_info_table, total_price_label):
         try:
-            product_id = sale_product_id.text()
+            product_id = sale_product_id.text().split("\n")[0]
+            for row in range(product_info_table.rowCount()):
+                exists = product_info_table.item(row, 1).text()
+                if exists == product_id:
+                    ex.show_warning_message("Duplicate Item", "Product already added")
+                    return
             if sale_Discount.text():
                 discount_percent = float(sale_Discount.text())
                 if float(sale_Discount.text()) > 100:
-                    ex.show_error_message("Invalid", "Discount cannot be more than 100")
+                    ex.show_error_message("Invalid", "Discount cannot be more than 100%")
                     return None
             else:
                 discount_percent = 0
