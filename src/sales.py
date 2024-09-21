@@ -83,14 +83,20 @@ class FinalizeSaleDialog(QDialog):
             # Insert each product into SaleItems table and delete from Products
             for item in self.sale_items:
                 product_id = item['id']
-                discount_percent = self.discount * 100
-                sale_price = item['MRP'] * (1 - self.discount)
-
+                if self.discount:
+                    discount_percent = self.discount * 100
+                    sale_price = item['Discounted MRP'] * (1 - self.discount)
+                elif item['MRP'] == item['Discounted MRP']:
+                    discount_percent = 0.0
+                    sale_price = item['Discounted MRP']
+                else:
+                    sale_price = item['Discounted MRP']
+                    discount_percent = ((item['MRP'] - item['Discounted MRP'])/item['MRP']) * 100
                 # Insert sale item
                 cursor.execute("""
-                INSERT INTO SaleItems (sale_id, product_id, product_name, quantity, discount_percent, sale_price)
-                VALUES (?, ?, ?, ?, ?, ?)
-                """, (sale_id, product_id, item['name'], 1, discount_percent, sale_price))
+                INSERT INTO SaleItems (sale_id, product_id, product_name, quantity, discount_percent, MRP, sale_price)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+                """, (sale_id, product_id, item['name'], 1, discount_percent, item['MRP'], sale_price,))
 
                 # Delete product from Products table
                 cursor.execute("DELETE FROM Products WHERE product_id = ?", (product_id,))
@@ -137,7 +143,14 @@ class salesData:
     def record_sale(self, sale_product_id, sale_Discount, sale_date_edit, product_info_table, total_price_label):
         try:
             product_id = sale_product_id.text()
-            discount_percent = float(sale_Discount.text()) if sale_Discount.text() else 0
+            if sale_Discount.text():
+                discount_percent = float(sale_Discount.text())
+                if float(sale_Discount.text()) > 100:
+                    ex.show_error_message("Invalid", "Discount cannot be more than 100")
+                    return None
+            else:
+                discount_percent = 0
+
             sale_date = sale_date_edit.date().toString("yyyy-MM-dd")
 
             # Query product information
@@ -171,7 +184,7 @@ class salesData:
             else:
                 ex.show_error_message("Error", "Product Not found")
         except Exception as e:
-            ex.show_error_message("Error", "Invalid action.")
+            ex.show_error_message("Error", e)
         finally:
             sale_product_id.clear()
             sale_product_id.setFocus()

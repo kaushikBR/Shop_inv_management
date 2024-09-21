@@ -73,24 +73,36 @@ class reportGeneration(QWidget):
                 query = f"""
                 SELECT s.sale_date AS Date, 
                        si.product_name AS Product_Name, 
-                       si.sale_price AS MRP
+                       si.MRP AS MRP,
+                       si.sale_price AS Discounted_MRP
                 FROM SaleItems si
                 JOIN Sales s ON si.sale_id = s.sale_id
                 WHERE s.sale_date BETWEEN '{start_date}' AND '{end_date}'
-                GROUP BY s.sale_date
                 ORDER BY s.sale_date ASC
                 """
-                self.show_report(conn, query, ["Date", "Product Name", "Price"])
+                self.show_report(conn, query, ["Date", "Product Name", "MRP", "Discounted MRP"])
 
             elif report_type == "Product Report":
                 query = """
-                SELECT product_name AS Product, 
-                       SUM(product_name) AS Total_Quantity_Left
-                FROM Products
-                GROUP BY product_name
-                ORDER BY product_name ASC
+                SELECT 
+                    product_name, 
+                    category, 
+                    quantity,
+                    COUNT(*) AS total_bottles_left
+                FROM 
+                    Products
+                GROUP BY 
+                    product_name, 
+                    category,
+                    quantity
+                HAVING 
+                    total_bottles_left > 0
+                ORDER BY 
+                    product_name, 
+                    category,
+                    quantity;
                 """
-                self.show_report(conn, query, ["Product Name", "Total Quantity Left"])
+                self.show_report(conn, query, ["Product Name", "Category", "ml", "Total Quantity Left"])
 
             conn.close()
 

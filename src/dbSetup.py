@@ -40,6 +40,7 @@ class databaseSetup():
                 product_name TEXT NOT NULL,
                 quantity INTEGER,
                 discount_percent REAL DEFAULT 0,
+                MRP REAL,
                 sale_price REAL,
                 PRIMARY KEY (sale_id, product_id),
                 FOREIGN KEY (sale_id) REFERENCES Sales(sale_id)

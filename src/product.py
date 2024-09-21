@@ -31,6 +31,7 @@ class products():
             self.product_id.setFocus()
             self.Quantity.clear()
             self.category.clear()
+            ex.show_warning_message("Add", "Product has been added to inventory")
         except ValueError:
             ex.show_warning_message("Input Error", "Input valid details")
         except Exception as e:
