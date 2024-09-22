@@ -1,5 +1,5 @@
 from PyQt5.QtWidgets import (QMainWindow, QDialog ,QWidget, QVBoxLayout, QHBoxLayout, 
-                             QTableWidget, QFormLayout, QLineEdit, QPushButton, QTextEdit, 
+                             QTableWidget, QFormLayout, QLineEdit, QPushButton, 
                              QLabel, QTabWidget, QDateEdit, QComboBox, QHeaderView)
 from PyQt5.QtCore import QDate, Qt
 from PyQt5.QtGui import QKeySequence, QFont
@@ -10,7 +10,7 @@ from src.report import reportGeneration
 from src.exceptions import exceptions as ex
 
 stylesheet = """
-QLineEdit, QPushButton, QDateEdit {
+QLineEdit, QPushButton, QDateEdit, QComboBox, QLabel, QTabWidget {
     font-size: 9pt;
 }
 """
