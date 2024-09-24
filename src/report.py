@@ -40,7 +40,7 @@ class reportGeneration(QWidget):
         # Report type selector
         report_type_layout = QHBoxLayout()
         self.report_type_combo = QComboBox(self)
-        self.report_type_combo.addItems(["Sales Report", "Product Report"])
+        self.report_type_combo.addItems(["Sales Report", "Product Report", "Expired Beer Report"])
         report_type_layout.addWidget(QLabel("Report Type:"))
         report_type_layout.addWidget(self.report_type_combo)
         layout.addLayout(report_type_layout)
@@ -85,6 +85,7 @@ class reportGeneration(QWidget):
             elif report_type == "Product Report":
                 query = """
                 SELECT 
+                    date,
                     product_name, 
                     category, 
                     quantity,
@@ -92,6 +93,7 @@ class reportGeneration(QWidget):
                 FROM 
                     Products
                 GROUP BY 
+                    date,
                     product_name, 
                     category,
                     quantity
@@ -102,7 +104,27 @@ class reportGeneration(QWidget):
                     category,
                     quantity;
                 """
-                self.show_report(conn, query, ["Product Name", "Category", "ml", "Total Quantity Left"])
+                self.show_report(conn, query, ["Stock Date","Product Name", "Category", "ml", "Total Quantity Left"])
+            elif report_type == "Expired Beer Report":
+                query = """
+                SELECT 
+                    date,
+                    product_id,
+                    product_name, 
+                    category
+                FROM 
+                    Products
+                WHERE
+                    category LIKE '%beer%'
+                    AND date <= DATE('now', '-6 months')
+                ORDER BY 
+                    date,
+                    product_name, 
+                    category,
+                    quantity;
+                """
+                self.show_report(conn, query, ["Stock Date","Product ID", "Product Name", "Category"])
+
 
             conn.close()
 
