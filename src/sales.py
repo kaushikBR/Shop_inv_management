@@ -217,3 +217,4 @@ class salesData:
                 ex.show_error_message("Error", "Item not found.")
         except Exception as e:
             ex.show_error_message("Error", "Some error has occurred.")
+        

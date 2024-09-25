@@ -157,7 +157,6 @@ class InventoryApp(QMainWindow):
 
     def setup_sales_tab(self):
         layout = QFormLayout()
-
         self.sale_product_id = QLineEdit()
         self.sale_product_id.setPlaceholderText("Scan Barcode for ID")
         self.sale_date_edit = QDateEdit(self)
@@ -206,26 +205,30 @@ class InventoryApp(QMainWindow):
         self.done_button.clicked.connect(self.open_finalize_sale_dialog)
         layout.addWidget(self.done_button)
         self.sales_tab.setLayout(layout)
+        self.sale_product_id.setFocus()
 
     def open_finalize_sale_dialog(self):
         # Collect current sale items from the product_info_table
-        sale_items = []
-        for row in range(self.product_info_table.rowCount()):
-            item = {
-                'id': self.product_info_table.item(row, 1).text(),
-                'name': self.product_info_table.item(row, 2).text(),
-                'MRP': float(self.product_info_table.item(row, 4).text().replace("₹", "")),
-                'Discounted MRP': float(self.product_info_table.item(row, 5).text().replace("₹", ""))
-            }
-            sale_items.append(item)
+        if self.product_info_table.rowCount():
+            sale_items = []
+            for row in range(self.product_info_table.rowCount()):
+                item = {
+                    'id': self.product_info_table.item(row, 1).text(),
+                    'name': self.product_info_table.item(row, 2).text(),
+                    'MRP': float(self.product_info_table.item(row, 4).text().replace("₹", "")),
+                    'Discounted MRP': float(self.product_info_table.item(row, 5).text().replace("₹", ""))
+                }
+                sale_items.append(item)
 
-        total_price = self.sales_int.total_price
-        date = self.sales_int.date
+            total_price = self.sales_int.total_price
+            date = self.sales_int.date
 
-        # Open the finalize sale dialog
-        dialog = FinalizeSaleDialog(self, sale_items, total_price, date, self.total_price_label)
-        if dialog.exec_() == QDialog.Accepted:
-            ex.show_warning_message("Done", "Sale Recorded")
+            # Open the finalize sale dialog
+            dialog = FinalizeSaleDialog(self, sale_items, total_price, date, self.total_price_label)
+            if dialog.exec_() == QDialog.Accepted:
+                ex.show_warning_message("Done", "Sale Recorded")
+        else:
+            ex.show_warning_message("Error", "Empty list of Products")
 
     def clear_sales_table(self):
         # Clear the product info table after finalizing
