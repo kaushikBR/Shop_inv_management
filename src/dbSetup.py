@@ -32,6 +32,15 @@ class databaseSetup():
             )
             """)
 
+            # Create the License table for license check
+            cursor.execute("""
+            CREATE TABLE IF NOT EXISTS license (
+                activation_key VARCHAR,
+                activation_status INTEGER DEFAULT 0,
+                day_left INTEGER DEFAULT 30
+            )
+            """)
+
             # Create the SaleItems table to hold individual sale items
             cursor.execute("""
             CREATE TABLE IF NOT EXISTS SaleItems (
