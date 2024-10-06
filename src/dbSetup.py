@@ -37,7 +37,8 @@ class databaseSetup():
             CREATE TABLE IF NOT EXISTS license (
                 activation_key VARCHAR,
                 activation_status INTEGER DEFAULT 0,
-                day_left INTEGER DEFAULT 30
+                day_left INTEGER DEFAULT 30,
+                date_installed DATE
             )
             """)
 

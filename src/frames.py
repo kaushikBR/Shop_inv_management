@@ -3,7 +3,6 @@ from PyQt5.QtWidgets import (QMainWindow, QDialog ,QWidget, QVBoxLayout, QHBoxLa
                              QLabel, QTabWidget, QDateEdit, QComboBox, QHeaderView, QShortcut)
 from PyQt5.QtCore import QDate, Qt
 from PyQt5.QtGui import QKeySequence, QFont
-from src.dbSetup import databaseSetup
 from src.product import products
 from src.sales import salesData, FinalizeSaleDialog
 from src.report import reportGeneration
@@ -52,7 +51,6 @@ class InventoryApp(QMainWindow):
         self.setup_inventory_tab()
         self.setup_sales_tab()
         self.setup_report_tab()
-        databaseSetup.create_db(self)
 
     def setup_inventory_tab(self):
         layout = QFormLayout()
