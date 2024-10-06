@@ -53,7 +53,7 @@ class LicenseManager:
 
             if db_key == hashed_key:
                 # Update activation status to 1 (activated)
-                cursor.execute("UPDATE license SET activation_status = 1 WHERE activation_key = ?", (db_key,))
+                cursor.execute("UPDATE license SET activation_status = 1, day_left = 0 WHERE activation_key = ?", (db_key,))
                 conn.commit()
                 return True
             else:

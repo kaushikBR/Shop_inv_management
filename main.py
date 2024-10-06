@@ -1,7 +1,8 @@
 import sys
 from src.frames import InventoryApp
 from src.license import LicenseManager, ActivationDialog
-from PyQt5.QtWidgets import QApplication, QDialog
+from PyQt5.QtWidgets import QApplication, QDialog, QShortcut
+from PyQt5.QtGui import QKeySequence
 
 def main():
     app = QApplication(sys.argv)

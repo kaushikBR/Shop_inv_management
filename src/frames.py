@@ -1,6 +1,6 @@
 from PyQt5.QtWidgets import (QMainWindow, QDialog ,QWidget, QVBoxLayout, QHBoxLayout, 
                              QTableWidget, QFormLayout, QLineEdit, QPushButton, 
-                             QLabel, QTabWidget, QDateEdit, QComboBox, QHeaderView)
+                             QLabel, QTabWidget, QDateEdit, QComboBox, QHeaderView, QShortcut)
 from PyQt5.QtCore import QDate, Qt
 from PyQt5.QtGui import QKeySequence, QFont
 from src.dbSetup import databaseSetup
@@ -8,6 +8,8 @@ from src.product import products
 from src.sales import salesData, FinalizeSaleDialog
 from src.report import reportGeneration
 from src.exceptions import exceptions as ex
+from src.license import ActivationDialog, LicenseManager
+import sys
 
 stylesheet = """
 QLineEdit, QPushButton, QDateEdit, QComboBox, QLabel, QTabWidget {
@@ -18,6 +20,8 @@ QLineEdit, QPushButton, QDateEdit, QComboBox, QLabel, QTabWidget {
 class InventoryApp(QMainWindow):
     def __init__(self):
         super().__init__()
+        acshortcut = QShortcut(QKeySequence("Ctrl+Alt+A"), self)
+        acshortcut.activated.connect(self.open_manual_activation_dialog)
         self.setStyleSheet(stylesheet)
         self.product_int = products()
         self.sales_int = salesData()
@@ -242,3 +246,13 @@ class InventoryApp(QMainWindow):
         report_layout = QVBoxLayout()  # Create a layout for the Reports tab
         report_layout.addWidget(self.report_widget)  # Add the report widget to the layout
         self.report_tab.setLayout(report_layout)  # Set the layout on the Reports tab
+    
+    def open_manual_activation_dialog(self):
+        license_manager = LicenseManager()
+        is_trial_active, days_left = license_manager.check_trial()
+        if is_trial_active:
+            ex.show_warning_message("License Status", "License Already Activated")
+        else:
+            dialog = ActivationDialog()
+            if dialog.exec_() == QDialog.Accepted:
+                sys.exit(0)
